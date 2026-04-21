@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Giám sát Công trình Thủy lợi Việt Nam</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    
+    <!-- Marker Cluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --accent-orange: #f39c12;
+            --accent-green: #27ae60;
+            --bg-light: #f4f7f9;
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        #map { width: 100%; height: 100vh; background: #e5e9ec; }
+
+        .header {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: var(--panel-bg);
+            backdrop-filter: blur(12px); padding: 10px 25px;
+            border-radius: 40px; border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        .header h1 {
+            margin: 0; font-size: 1.1rem; font-weight: 800;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+
+        .controls {
+            position: absolute; top: 85px; right: 20px; z-index: 1000;
+            background: var(--panel-bg); backdrop-filter: blur(15px);
+            padding: 24px; border-radius: 20px;
+            border: 1px solid var(--glass-border); width: 260px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .control-group { margin-bottom: 18px; }
+        .control-label {
+            display: block; font-size: 0.75rem; text-transform: uppercase;
+            color: var(--text-sub); margin-bottom: 8px; font-weight: 700;
+        }
+
+        select {
+            width: 100%; padding: 12px; background: #fff;
+            border: 1px solid #dcdde1; color: var(--text-main); border-radius: 10px;
+            outline: none; transition: 0.3s;
+        }
+
+        /* Chú thích bản đồ (Legend) */
+        .legend {
+            position: absolute; bottom: 30px; right: 20px; z-index: 1000;
+            background: var(--panel-bg); padding: 15px; border-radius: 15px;
+            border: 1px solid var(--glass-border); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.8rem; font-weight: 600; }
+        .legend-icon { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        .stats {
+            position: absolute; bottom: 30px; left: 20px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            padding: 12px 20px; border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            display: flex; align-items: center; gap: 15px;
+            min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+        .stat-label { font-size: 0.7rem; color: var(--text-sub); text-transform: uppercase; font-weight: 600; }
+
+        /* Custom Marker Icon */
+        .custom-div-icon {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            color: white; font-weight: bold; font-size: 10px;
+        }
+
+        /* Popup Styling */
+        .leaflet-popup-content-wrapper { border-radius: 16px; width: 300px; }
+        .popup-header { border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; margin-bottom: 8px; }
+        .popup-title { font-weight: 800; font-size: 1rem; color: var(--primary-color); }
+        .popup-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; }
+        .popup-key { font-weight: 600; color: var(--text-sub); }
+        .popup-val { color: var(--text-main); text-align: right; }
+        .coord-box { 
+            background: #f8f9fa; padding: 8px; border-radius: 8px; margin-top: 10px;
+            border: 1px dashed #ced4da; font-family: monospace; font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Hydraulic Insight <span style="color:rgba(0,0,0,0.1); margin:0 5px;">|</span> VN Assets</h1>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label class="control-label">Lưu vực sông</label>
+            <select id="luuVucFilter">
+                <option value="all">Tất cả lưu vực</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Tỉnh / Thành phố</label>
+            <select id="tinhFilter">
+                <option value="all">Toàn quốc</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><span class="legend-icon" style="background:var(--primary-color)"></span> 🌊 Hồ chứa</div>
+        <div class="legend-item"><span class="legend-icon" style="background:var(--accent-orange)"></span> 🚪 Cổng thủy lợi</div>
+        <div class="legend-item"><span class="legend-icon" style="background:var(--accent-green)"></span> ⚡ Trạm bơm</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card" style="border-left-color: var(--primary-color);">
+            <div><div class="stat-value" id="count-ho">0</div><div class="stat-label">Hồ chứa</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--accent-orange);">
+            <div><div class="stat-value" id="count-cong">0</div><div class="stat-label">Cống</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--accent-green);">
+            <div><div class="stat-value" id="count-bom">0</div><div class="stat-label">Trạm bơm</div></div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        // Định nghĩa hệ tọa độ VN-2000 (Kinh tuyến trục 105 cho toàn quốc)
+        proj4.defs("VN2000", "+proj=tmerc +lat_0=0 +lon_0=105 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +units=m +no_defs");
+
+        const map = L.map('map', { center: [16.4637, 107.5909], zoom: 6, zoomControl: false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        const clusters = {
+            'Hồ chứa': L.markerClusterGroup(),
+            'Cống': L.markerClusterGroup(),
+            'Trạm bơm': L.markerClusterGroup()
+        };
+        Object.values(clusters).forEach(c => map.addLayer(c));
+
+        function createPopup(props, rawCoords) {
+            const title = props.ten_ho || props.ten_cong || props.ten_tram_bom || "Công trình";
+            const type = props.ten_ho ? "Hồ chứa" : (props.ten_cong ? "Cống" : "Trạm bơm");
+            
+            // Tọa độ đã chuyển đổi (WGS84)
+            const lat = props.vi_do || '---';
+            const lng = props.kinh_do || '---';
+
+            return `
+                <div class="popup-header">
+                    <div style="font-size:0.7rem; color:var(--text-sub)">${type}</div>
+                    <div class="popup-title">${title}</div>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-row"><span class="popup-key">Địa điểm:</span><span class="popup-val">${props.dia_diem || '---'}</span></div>
+                    <div class="popup-row"><span class="popup-key">Quản lý:</span><span class="popup-val">${props.don_vi_quan_ly || '---'}</span></div>
+                    
+                    <div class="coord-box">
+                        <div style="font-weight:bold; color:var(--primary-color); margin-bottom:5px;">Hệ tọa độ Dashboard:</div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span>VN-2000 (Gốc):</span>
+                            <span>X:${Math.round(rawCoords[0])}, Y:${Math.round(rawCoords[1])}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:3px;">
+                            <span>WGS84 (Map):</span>
+                            <span>${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadLayer(url, type, color, countId, iconChar) {
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                let count = 0;
+
+                data.features.forEach(f => {
+                    const rawCoords = f.geometry.coordinates;
+                    let latlng;
+                    
+                    // Nếu đã có kinh/vĩ độ chuẩn WGS84
+                    if (f.properties.kinh_do && f.properties.vi_do && f.properties.kinh_do > 100) {
+                        latlng = [f.properties.vi_do, f.properties.kinh_do];
+                    } else {
+                        // Chuyển đổi từ VN-2000
+                        const wgs84 = proj4("VN2000", "WGS84", [rawCoords[0], rawCoords[1]]);
+                        latlng = [wgs84[1], wgs84[0]];
+                        f.properties.vi_do = latlng[0];
+                        f.properties.kinh_do = latlng[1];
+                    }
+
+                    if (latlng[0] !== 0) {
+                        const icon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background:${color}; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">${iconChar}</div>`,
+                            iconSize: [24, 24]
+                        });
+
+                        const marker = L.marker(latlng, { icon: icon }).bindPopup(createPopup(f.properties, rawCoords));
+                        clusters[type].addLayer(marker);
+                        count++;
+                    }
+                });
+                document.getElementById(countId).textContent = count.toLocaleString();
+            } catch(e) { console.error(e); }
+        }
+
+        async function init() {
+            // Load danh sách lưu vực
+            try {
+                const lvRes = await fetch('luu_vuc.json');
+                const lvData = await lvRes.json();
+                const lvSelect = document.getElementById('luuVucFilter');
+                lvData.forEach(lv => {
+                    const opt = document.createElement('option');
+                    opt.value = lv.Value; opt.textContent = lv.Name;
+                    lvSelect.appendChild(opt);
+                });
+            } catch(e) {}
+
+            loadLayer('ho_chua.json', 'Hồ chứa', '#007bff', 'count-ho', '🌊');
+            loadLayer('cong.json', 'Cống', '#f39c12', 'count-cong', '🚪');
+            loadLayer('tram_bom.json', 'Trạm bơm', '#27ae60', 'count-bom', '⚡');
+        }
+
+        init();
+    </script>
+</body>
+</html>
