@@ -1,44 +1,64 @@
-# 🌊 VN Assets Mapping - Hydraulic GIS Dashboard
+# 🌊 Vietnam GIS Hydraulic & River Network Dashboard
 
-A professional, interactive GIS Dashboard for monitoring hydraulic infrastructure across Vietnam (Reservoirs, Sluices, Pumping Stations). This system handles large-scale geospatial data and performs real-time coordinate transformations from VN-2000 to WGS84.
-
-## 🚀 Key Features
-- **VN-2000 to WGS84 Transformation**: Automatically converts industry-standard Vietnamese coordinates to international map standards with high precision.
-- **Smart Marker Clustering**: Effortlessly handles 1,000+ data points without performance lag using advanced clustering techniques.
-- **Dynamic Infrastructure Filtering**: Filter assets by River Basins or Provinces/Cities.
-- **High-End UI**: Premium "Light Mode" design with Glassmorphism effects and customized iconography (🌊 Reservoirs, 🚪 Sluices, ⚡ Pumping Stations).
-- **Dual Coordinate Display**: Side-by-side comparison of raw VN-2000 data and mapping coordinates for technical validation.
-
-## 🛠️ Tech Stack
-- **Leaflet.js**: Core Interactive Map engine.
-- **Proj4js**: Coordinate system transformation logic.
-- **MarkerCluster**: Performance optimization for big data.
-- **GeoJSON**: Lightweight geospatial data interchange.
-- **CartoDB Positron**: Modern, clean map tile layer.
+An advanced, high-performance GIS Dashboard for monitoring and visualizing large-scale hydraulic infrastructure and river networks across Vietnam. Optimized to handle over **250,000 geospatial features** with real-time interactivity.
 
 ---
 
-# 🌊 Hệ thống Giám sát Hạ tầng Thủy lợi Việt Nam
+## 🇺🇸 English Version
 
-Hệ thống Dashboard GIS chuyên nghiệp dùng để giám sát các công trình thủy lợi trên toàn lãnh thổ Việt Nam (Hồ chứa, Cống, Trạm bơm). Hệ thống có khả năng xử lý dữ liệu lớn và chuyển đổi tọa độ VN-2000 sang WGS84 theo thời gian thực.
+### 🚀 Key Features
+- **Extreme Scale Geospatial Data**: Manages 250,000+ river segments (LineStrings) and 5,000+ water bodies (Polygons) with zero lag.
+- **High-Performance Canvas Rendering**: Utilizes the HTML5 Canvas API for ultra-fast vector drawing, ensuring 60FPS performance even with massive datasets.
+- **Adaptive Zoom Rendering**: Dynamic level-of-detail (LOD) system that toggles complex river networks based on zoom levels to optimize browser RAM.
+- **Regional Data Strategy**: Data is split into North, Central, and South regions to facilitate faster initial loading and efficient memory management.
+- **Coordinate Transformation**: Seamlessly converts industry-standard **VN-2000** coordinates to international **WGS84** standards.
 
-## 🚀 Tính năng nổi bật
-- **Chuyển đổi tọa độ VN-2000**: Tự động chuyển đổi từ tọa độ chuyên ngành Việt Nam sang chuẩn bản đồ quốc tế với độ chính xác cao.
-- **Gom nhóm thông minh (Clustering)**: Xử lý mượt mà hơn 1.000 điểm dữ liệu mà không gây lag trình duyệt.
-- **Bộ lọc linh hoạt**: Lọc công trình theo Lưu vực sông hoặc theo Tỉnh/Thành phố.
-- **Giao diện cao cấp**: Thiết kế Light Mode hiện đại, sử dụng hiệu ứng kính mờ (Glassmorphism) và bộ biểu tượng đặc thù.
-- **Hiển thị tọa độ kép**: Cho phép đối chiếu trực tiếp dữ liệu sổ sách (VN-2000) và vị trí trên bản đồ (WGS84).
+### 🛠️ Tech Stack
+- **Leaflet.js**: Core Interactive Map engine.
+- **HTML5 Canvas**: Optimized rendering layer for big data.
+- **Git LFS**: Storage management for large geospatial JSON files (>400MB).
+- **Proj4js**: High-precision coordinate system transformations.
 
-## 🖥️ Cách chạy dự án (How to run)
-1. **Clone project**:
+### 📦 Installation & Setup
+1. **Clone & Initialize LFS**:
    ```bash
    git clone https://github.com/huydevhehe/VN-assets-mapping.git
+   cd VN-assets-mapping
+   git lfs install
+   git lfs pull
+   ```
+2. **Run Locally**:
+   Use a local server to avoid CORS issues:
+   - **VS Code**: Use "Live Server" extension.
+   - **Python**: `python -m http.server 8000`
+
+---
+
+## 🇻🇳 Tiếng Việt
+
+### 🚀 Tính năng nổi bật
+- **Xử lý dữ liệu GIS quy mô lớn**: Hiển thị mượt mà hơn 250.000 đoạn sông/kênh và 5.000 hồ chứa trên toàn quốc.
+- **Công nghệ Canvas Renderer**: Sử dụng API Canvas để vẽ hàng trăm nghìn đối tượng vector, đảm bảo trải nghiệm mượt mà 60FPS.
+- **Hiển thị thông minh theo Zoom**: Tự động lọc và chỉ hiển thị chi tiết mạng lưới sông ngòi khi người dùng phóng to (Zoom Level >= 10), giúp tối ưu bộ nhớ.
+- **Phân vùng dữ liệu Miền**: Chia dữ liệu thành 3 tệp riêng biệt (Bắc - Trung - Nam) để tối ưu hóa tốc độ tải và khả năng xử lý của trình duyệt.
+- **Chuyển đổi VN-2000**: Tự động chuyển đổi từ hệ tọa độ chuyên ngành Việt Nam sang chuẩn bản đồ quốc tế.
+
+### 🛠️ Công nghệ sử dụng
+- **Leaflet.js**: Thư viện bản đồ tương tác chính.
+- **Canvas API**: Render dữ liệu lớn không gây lag.
+- **Git LFS**: Quản lý các file dữ liệu JSON nặng (>400MB) trên GitHub.
+- **Python Data Engine**: Bộ script cào và tiền xử lý dữ liệu GIS.
+
+### 🖥️ Cách khởi chạy
+1. **Tải mã nguồn và dữ liệu**:
+   ```bash
+   git clone https://github.com/huydevhehe/VN-assets-mapping.git
+   cd VN-assets-mapping
+   git lfs install
+   git lfs pull
    ```
 2. **Chạy Local Server**: 
-   Dự án sử dụng các tệp JSON cục bộ, bạn cần chạy qua một server ảo để tránh lỗi bảo mật trình duyệt (CORS).
-   - Nếu dùng **VS Code**: Chuột phải vào `index.html` chọn **Open with Live Server**.
-   - Nếu máy có **Python**: Chạy lệnh `python -m http.server 8000`.
-   - Sau đó truy cập: `http://localhost:8000`
+   - Sử dụng **Live Server** trên VS Code hoặc chạy lệnh: `python -m http.server 8000`.
 
 ---
 *Developed by **Nguyen Quoc Huy***
