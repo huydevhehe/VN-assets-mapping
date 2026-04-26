@@ -3,208 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống Giám sát Hạ tầng Thủy lợi Việt Nam</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>VN Assets Mapping - Bản Pro 8 Cụm</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-
     <style>
-        :root { --primary-color: #007bff; --panel-bg: rgba(255, 255, 255, 0.95); }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; overflow: hidden; }
-        #map { width: 100%; height: 100vh; background: #eaeff2; }
+        :root {
+            --primary-color: #2980b9;
+            --bg-sidebar: rgba(255, 255, 255, 0.98);
+        }
+
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; background: #fdfdfd; }
         
-        .header {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; background: var(--panel-bg); padding: 10px 25px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd;
-        }
-        .header h1 { margin: 0; font-size: 0.9rem; font-weight: 800; color: #1a3a5a; text-transform: uppercase; }
+        #map { width: 100%; height: 100vh; z-index: 10; background: #fff; }
 
-        /* Label Tỉnh chuyên nghiệp */
-        .province-label {
-            font-size: 11px; font-weight: 800; color: #2c3e50; text-transform: uppercase;
-            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
-            background: transparent !important; border: none !important; box-shadow: none !important;
-            pointer-events: none;
-        }
-
-        /* Label Sông tinh tế */
-        .river-label {
-            font-size: 9px; font-weight: 600; color: #2980b9; font-style: italic;
-            text-shadow: 1px 1px 1px #fff; background: transparent !important;
-            border: none !important; box-shadow: none !important; pointer-events: none;
+        .sidebar {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 320px;
+            max-height: 92vh;
+            background: var(--bg-sidebar);
+            border-radius: 12px;
+            z-index: 9999;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            border: 1px solid #ddd;
         }
 
-        .custom-scale-container {
-            position: absolute; bottom: 25px; left: 20px; z-index: 1000;
-            background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 2px;
-            border: 1px solid #777; font-family: 'Courier New', monospace; font-size: 11px; font-weight: bold;
-            display: flex; gap: 8px; align-items: center;
+        .sidebar h2 { margin: 0 0 12px 0; color: #333; font-size: 1.1rem; text-align: center; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;}
+        
+        .cluster-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 0;
         }
-        .scale-segment { border-bottom: 2px solid #000; border-left: 2px solid #000; border-right: 2px solid #000; height: 3px; width: 60px; }
 
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary-color); }
+        .cluster-header { display: flex; align-items: center; justify-content: space-between; font-weight: bold; color: #2c3e50; font-size: 0.95rem; margin-bottom: 6px; }
+        
+        .sub-toggles {
+            display: flex;
+            gap: 15px;
+            margin-left: 5px;
+            padding-top: 5px;
+        }
+
+        .sub-toggles label {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .sub-toggles input { margin-right: 5px; }
+
+        .status { font-size: 0.7rem; font-style: italic; color: #999; margin-top: 4px; display: block; }
+        .loading { color: #e67e22; font-weight: bold; }
+        .loaded { color: #27ae60; }
+
+        /* Custom Popup */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px; }
+        .data-table td { padding: 3px 5px; border: 1px solid #eee; }
+        .label { font-weight: bold; background: #fafafa; color: #666; }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="loading-overlay">ĐANG KHỞI TẠO BẢN ĐỒ THỦY LỢI...</div>
-    <div class="header"><h1>Hydraulic GIS Monitoring System</h1></div>
+<div class="sidebar">
+    <h2>💎 QUẢN LÝ DỮ LIỆU</h2>
+    <div id="controls">
+        <!-- Cụm template cho 8 vùng -->
+        <script>
+            const clusters = [
+                { id: 1, name: "Cụm 1: Đông Bắc & Tây Bắc", provinces: "Hà Giang, Cao Bằng, Lào Cai, Bắc Kạn, Lạng Sơn, Tuyên Quang, Yên Bái, Thái Nguyên, Phú Thọ." },
+                { id: 2, name: "Cụm 2: Đồng bằng Sông Hồng", provinces: "Vĩnh Phúc, Bắc Giang, Bắc Ninh, Quảng Ninh, Hải Dương, Hải Phòng, Hưng Yên, Thái Bình, Hà Nam, Nam Định, Ninh Bình." },
+                { id: 3, name: "Cụm 3: Bắc Trung Bộ", provinces: "Thanh Hóa, Nghệ An, Hà Tĩnh, Quảng Bình, Quảng Trị." },
+                { id: 4, name: "Cụm 4: Duyên hải Nam Trung Bộ", provinces: "Thừa Thiên Huế, Đà Nẵng, Quảng Nam, Quảng Ngãi, Bình Định, Phú Yên." },
+                { id: 5, name: "Cụm 5: Tây Nguyên", provinces: "Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng." },
+                { id: 6, name: "Cụm 6: Đông Nam Bộ", provinces: "Khánh Hòa, Ninh Thuận, Bình Thuận, Bình Phước, Tây Ninh, Bình Dương, Đồng Nai, Bà Rịa - Vũng Tàu, TP.HCM." },
+                { id: 7, name: "Cụm 7: Tây Nam Bộ (Nhóm 1)", provinces: "Long An, Tiền Giang, Bến Tre, Trà Vinh, Vĩnh Long, Đồng Tháp, An Giang." },
+                { id: 8, name: "Cụm 8: Tây Nam Bộ (Nhóm 2)", provinces: "Cần Thơ, Hậu Giang, Sóc Trăng, Bạc Liêu, Cà Mau, Kiên Giang." }
+            ];
 
-    <div class="custom-scale-container">
-        <div id="scale-text">5 km</div>
-        <div class="scale-segment"></div>
-        <div id="scale-ratio">1 : 0k</div>
+            const controlsDiv = document.getElementById('controls');
+            clusters.forEach(c => {
+                controlsDiv.innerHTML += `
+                    <div class="cluster-item">
+                        <div class="cluster-header">
+                            <span>${c.name}</span>
+                        </div>
+                        <div class="provinces-list">${c.provinces}</div>
+                        <div class="sub-toggles">
+                            <label><input type="checkbox" id="line-${c.id}" onchange="toggleLayer(${c.id}, 'line')"> Sông</label>
+                            <label><input type="checkbox" id="poly-${c.id}" onchange="toggleLayer(${c.id}, 'poly')"> Vùng</label>
+                        </div>
+                        <span id="status-${c.id}" class="status">Sẵn sàng</span>
+                    </div>
+                `;
+            });
+        </script>
     </div>
+    <div style="margin-top: 15px; font-size: 0.75rem; color: #888; border-top: 1px solid #eee; padding-top: 10px;">
+        * Sông (Line): Chi tiết mương máng.<br>
+        * Vùng (Polygon): Sông lớn, hồ chứa.
+    </div>
+</div>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <script>
-        // Bat che do Canvas de render muot 250k doi tuong
-        const map = L.map('map', { 
-            center: [16.0, 107.5], 
-            zoom: 6,
-            preferCanvas: true 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // 1. Khởi tạo Map với nền cực sạch
+    const map = L.map('map', {
+        preferCanvas: true
+    }).setView([16.0, 106.0], 6);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO'
+    }).addTo(map);
+
+    // 2. Load viền Việt Nam để "định hình" vùng chỉ có ở VN
+    fetch('ranh_gioi_tinh.json')
+        .then(res => res.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: {
+                    color: "#e74c3c",
+                    weight: 1,
+                    fillOpacity: 0,
+                    dashArray: '3, 5'
+                },
+                interactive: false
+            }).addTo(map);
         });
-        
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // Group quan ly cac lop du lieu
-        const layerGroups = {
-            provinces: L.layerGroup().addTo(map),
-            polygons: L.layerGroup().addTo(map),
-            lines: L.layerGroup(), // Chua add vao map ngay, se add khi zoom vao
-            points: L.markerClusterGroup().addTo(map)
-        };
+    // Kho lưu trữ dữ liệu đã tải để không phải tải lại
+    const cache = { line: {}, poly: {} };
+    const layers = { line: {}, poly: {} };
 
-        // Thanh ti le
-        function updateScale() {
-            const width = 60;
-            const centerLatLng = map.getCenter();
-            const point1 = map.latLngToLayerPoint(centerLatLng);
-            const point2 = L.point(point1.x + width, point1.y);
-            const latLng2 = map.layerPointToLatLng(point2);
-            const dist = centerLatLng.distanceTo(latLng2);
-            document.getElementById('scale-text').innerText = `${(dist/1000).toFixed(1)} km`;
-            const zoom = map.getZoom();
-            const ratio = Math.round(591657550 / Math.pow(2, zoom) / 1000);
-            document.getElementById('scale-ratio').innerText = `1 : ${ratio}k`;
-        }
-        map.on('zoomend moveend', updateScale);
-        updateScale();
+    async function toggleLayer(id, type) {
+        const checkbox = document.getElementById(`${type}-${id}`);
+        const statusEl = document.getElementById(`status-${id}`);
 
-        function getProvinceColor(name) {
-            const colors = ['#fdf2f2', '#f2fdf2', '#f2f4fd', '#fdfdf2', '#f2fdfd', '#fdf2fd'];
-            let hash = 0; for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return colors[Math.abs(hash) % colors.length];
-        }
+        if (checkbox.checked) {
+            if (!cache[type][id]) {
+                statusEl.className = 'status loading';
+                statusEl.innerText = 'Đang tải...';
+                try {
+                    const fileName = type === 'line' ? `FULL_line_vung_${id}.json` : `FULL_polygon_vung_${id}.json`;
+                    const res = await fetch(fileName);
+                    cache[type][id] = await res.json();
+                } catch (e) {
+                    statusEl.innerText = 'Lỗi tải file';
+                    checkbox.checked = false;
+                    return;
+                }
+            }
 
-        const dataConfigs = [
-            { file: 'ranh_gioi_tinh.json', type: 'province' },
-            { file: 'ho_chua.json', type: 'point', color: '#007bff' },
-            // Polygons (Vung song lon) - Load tat ca vi no nhe
-            { file: 'song_polygon_bac.json', type: 'polygon' },
-            { file: 'song_polygon_trung.json', type: 'polygon' },
-            { file: 'song_polygon_nam.json', type: 'polygon' },
-            // Lines (Song chi tiet) - Se duoc load dan dan
-            { file: 'song_line_bac.json', type: 'line' },
-            { file: 'song_line_trung.json', type: 'line' },
-            { file: 'song_line_nam.json', type: 'line' }
-        ];
+            const style = type === 'line' 
+                ? { color: "#2980b9", weight: 0.8, opacity: 0.6 }
+                : { color: "#3498db", weight: 1, fillColor: "#3498db", fillOpacity: 0.4 };
 
-        const provinceLabels = {};
+            layers[type][id] = L.geoJSON(cache[type][id], {
+                style: style,
+                onEachFeature: function(feature, layer) {
+                    // 1. Tên sông (Ưu tiên cột 'ten' hoặc 'DIADANH')
+                    const name = feature.properties.ten || feature.properties.DIADANH || feature.properties.TEN_SONG || "Không tên";
+                    
+                    // 2. Hiển thị nhãn (Tooltip) - Chỉ hiện khi Zoom >= 13 để tránh rối
+                    layer.bindTooltip(name, {
+                        sticky: true,
+                        className: 'river-label',
+                        direction: 'top'
+                    });
 
-        async function loadLayer(cfg) {
-            try {
-                const res = await fetch(cfg.file);
-                if (!res.ok) throw new Error("File not found");
-                const data = await res.json();
-                
-                const geojson = L.geoJSON(data, {
-                    style: (f) => {
-                        if (cfg.type === 'province') {
-                            const name = f.properties.ten || f.properties.Ten_Tinh || "VN";
-                            return { fillColor: getProvinceColor(name), weight: 0.8, opacity: 1, color: '#95a5a6', fillOpacity: 0.4 };
-                        }
-                        if (cfg.type === 'polygon') return { color: '#2980b9', weight: 0.5, fillColor: '#3498db', fillOpacity: 0.5 };
-                        if (cfg.type === 'line') return { color: '#5dade2', weight: 0.4, opacity: 0.6 };
-                        return { color: cfg.color || '#333', weight: 2 };
-                    },
-                    pointToLayer: (f, latlng) => {
-                        return L.marker(latlng, { icon: L.divIcon({ className: '', html: `<div style="background:${cfg.color}; width:8px; height:8px; border-radius:50%; border:1px solid white;"></div>` }) });
-                    },
-                    onEachFeature: (f, layer) => {
-                        if (cfg.type === 'province') {
-                            const name = f.properties.ten || f.properties.Ten_Tinh;
-                            if (name) { // Chi tao nhan neu co ten
-                                const bounds = layer.getBounds();
-                                const marker = L.marker(bounds.getCenter(), {
-                                    icon: L.divIcon({ className: 'province-label', html: name, iconSize: [100, 20] }),
-                                    interactive: false
-                                });
-                                provinceLabels[name] = marker;
-                                marker.addTo(layerGroups.provinces);
-                            }
-                        }
-                        if (cfg.type === 'point') layer.bindPopup(`<b>${f.properties.ten || "Công trình"}</b>`);
-                        if (f.properties.ten && f.properties.ten !== "undefined") {
-                            layer.bindTooltip(f.properties.ten, { sticky: true, className: 'river-label' });
-                        }
+                    // 3. Tạo bảng thông tin chi tiết (Popup)
+                    let table = '<table class="data-table">';
+                    const friendlyNames = {
+                        'ten': 'Tên gọi',
+                        'dorong': 'Độ rộng (m)',
+                        'trangthai': 'Trạng thái',
+                        'shape_leng': 'Chiều dài (m)',
+                        'ngaycapnha': 'Cập nhật',
+                        'DIADANH': 'Địa danh',
+                        'MA_SONG': 'Mã sông'
+                    };
+
+                    for (let key in feature.properties) {
+                        let label = friendlyNames[key] || key;
+                        let val = feature.properties[key] || '---';
+                        table += `<tr><td class="label">${label}</td><td>${val}</td></tr>`;
                     }
-                });
+                    table += '</table>';
+                    layer.bindPopup(`<strong>THUỘC TÍNH CHI TIẾT</strong>${table}`, { maxWidth: 300 });
 
-                if (cfg.type === 'province') geojson.addTo(layerGroups.provinces);
-                else if (cfg.type === 'polygon') geojson.addTo(layerGroups.polygons);
-                else if (cfg.type === 'line') geojson.addTo(layerGroups.lines);
-                else if (cfg.type === 'point') geojson.addTo(layerGroups.points);
+                    // 4. Hiệu ứng hover
+                    layer.on({
+                        mouseover: function() { this.setStyle({ weight: 4, color: '#f1c40f' }); },
+                        mouseout: function() { 
+                            const t = feature.geometry.type.includes('Polygon') ? 'poly' : 'line';
+                            this.setStyle(t === 'line' ? { weight: 0.8, color: "#2980b9" } : { weight: 1, color: "#3498db" });
+                        }
+                    });
+                }
+            }).addTo(map);
 
-                console.log(`[OK] Loaded: ${cfg.file}`);
-            } catch(e) { 
-                console.warn("Chưa có dữ liệu hoặc lỗi load:", cfg.file); 
+            statusEl.className = 'status loaded';
+            statusEl.innerText = 'Đã tải xong';
+        } else {
+            if (layers[type][id]) {
+                map.removeLayer(layers[type][id]);
+                delete layers[type][id];
+            }
+            if (!layers.line[id] && !layers.poly[id]) {
+                statusEl.className = 'status';
+                statusEl.innerText = 'Sẵn sàng';
             }
         }
-
-        // Logic kiem soat hien thi theo Zoom
-        map.on('zoomend', function() {
-            const zoom = map.getZoom();
-            // Chi hien line khi zoom > 9 de do lag
-            if (zoom >= 10) {
-                if (!map.hasLayer(layerGroups.lines)) map.addLayer(layerGroups.lines);
-            } else {
-                if (map.hasLayer(layerGroups.lines)) map.removeLayer(layerGroups.lines);
-            }
-        });
-
-        async function init() {
-            // 1. Load ranh gioi tinh truoc
-            await loadLayer(dataConfigs[0]);
-            
-            // 2. Load ho chua va Polygon song lon
-            for(let i=1; i<=4; i++) {
-                await loadLayer(dataConfigs[i]);
-            }
-            
-            // Tat loader de user thay map truoc
-            document.getElementById('loader').style.display = 'none';
-
-            // 3. Load cac file Line chi tiet TUAN TU (de tranh loi WinError 10054)
-            console.log("Bat dau tai du lieu chi tiet trong background...");
-            for(let i=5; i<dataConfigs.length; i++) {
-                await loadLayer(dataConfigs[i]);
-                // Nghi 1 chut giua cac file de trinh duyet khong bi treo
-                await new Promise(r => setTimeout(r, 500));
-            }
-            
-            console.log("Da tai xong toan bo du lieu!");
-            // Check zoom hien tai de quyet dinh co hien line hay khong
-            if (map.getZoom() >= 10) map.addLayer(layerGroups.lines);
-        }
-        init();
-    </script>
+    }
+</script>
 </body>
 </html>
